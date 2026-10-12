@@ -1,0 +1,11 @@
+   {
+     "devices": [
+       {"id": "R1",  "type": "router", "ip": "192.168.1.1",  "parent": null},
+       {"id": "SW1", "type": "switch", "ip": "192.168.1.2",  "parent": "R1"},
+       {"id": "SW2", "type": "switch", "ip": "192.168.2.2",  "parent": "R1"},
+       {"id": "PC1", "type": "pc",     "ip": "192.168.1.10", "parent": "SW1"},
+       {"id": "PC2", "type": "pc",     "ip": "192.168.1.11", "parent": "SW1"},
+       {"id": "SRV", "type": "server", "ip": "192.168.2.10", "parent": "SW2"},
+       {"id": "PC3", "type": "pc",     "ip": "192.168.2.11", "parent": "SW2"}
+     ]
+   }
