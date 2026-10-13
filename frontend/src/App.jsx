@@ -49,7 +49,7 @@ const get = async (url) => {
 
 // Polls the Flask API every 2 seconds. `refresh()` forces an immediate reload (used after a button action).
 function useDashboard(selectedId) {
-  const [data, setData] = useState({ devices: [], events: [], uptime: {}, loaded: false, error: false, updated: null });
+  const [data, setData] = useState({ devices: [], events: [], uptime: {}, mode: "sim", loaded: false, error: false, updated: null });
   const [history, setHistory] = useState({ id: null, rows: [] });
   const [kick, setKick] = useState(0);
 
@@ -57,14 +57,15 @@ function useDashboard(selectedId) {
     let live = true;
     async function load() {
       try {
-        const [devices, events, uptime, rows] = await Promise.all([
+        const [devices, events, uptime, modeInfo, rows] = await Promise.all([
           get("/api/status"),
           get("/api/events"),
           get("/api/uptime"),
+          get("/api/mode"),
           selectedId ? get("/api/history/" + selectedId) : [],
         ]);
         if (!live) return;
-        setData({ devices, events, uptime, loaded: true, error: false, updated: Date.now() / 1000 });
+        setData({ devices, events, uptime, mode: modeInfo.mode, loaded: true, error: false, updated: Date.now() / 1000 });
         setHistory({ id: selectedId, rows });
       } catch {
         if (live) setData((d) => ({ ...d, loaded: true, error: true }));
@@ -90,6 +91,46 @@ function StatusBadge({ status }) {
       <i style={{ background: s.color }} />
       {s.label}
     </span>
+  );
+}
+
+// ---------- Mode switch: simulated network vs real pings ----------
+function ModeSwitch({ mode, onChange }) {
+  const [busy, setBusy] = useState(false);
+
+  async function pick(next) {
+    if (next === mode || busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/mode/" + next, { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        alert(body.error ?? "Could not switch mode");
+        return;
+      }
+      onChange();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="seg" role="group" aria-label="Monitoring mode">
+      {[
+        ["sim", "Simulation"],
+        ["real", "Real"],
+      ].map(([key, label]) => (
+        <button
+          key={key}
+          className={"seg-btn" + (mode === key ? " on" : "")}
+          aria-pressed={mode === key}
+          disabled={busy}
+          onClick={() => pick(key)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -292,7 +333,7 @@ function LatencyChart({ rows }) {
 }
 
 // ---------- Device details panel ----------
-function DevicePanel({ device, uptime, history, onChanged }) {
+function DevicePanel({ device, uptime, history, mode, onChanged }) {
   const [busy, setBusy] = useState(null);
 
   if (!device) {
@@ -345,17 +386,24 @@ function DevicePanel({ device, uptime, history, onChanged }) {
       <h3>Latency, recent checks</h3>
       <LatencyChart rows={history} />
 
-      <div className="actions">
-        {[
-          ["fail", "Simulate failure"],
-          ["slow", "Make slow"],
-          ["restore", "Restore"],
-        ].map(([kind, label]) => (
-          <button key={kind} className="btn" disabled={busy !== null} onClick={() => act(kind)}>
-            {label}
-          </button>
-        ))}
-      </div>
+      {mode === "sim" ? (
+        <div className="actions">
+          {[
+            ["fail", "Simulate failure"],
+            ["slow", "Make slow"],
+            ["restore", "Restore"],
+          ].map(([kind, label]) => (
+            <button key={kind} className="btn" disabled={busy !== null} onClick={() => act(kind)}>
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="note">
+          Real mode: this device is being pinged for real. To test a failure, switch the device off or
+          turn off its Wi-Fi.
+        </p>
+      )}
     </section>
   );
 }
@@ -402,11 +450,12 @@ function Events({ events }) {
 // ---------- Page ----------
 function App() {
   const [selectedId, setSelectedId] = useState(null);
-  const { devices, events, uptime, history, loaded, error, updated, refresh } = useDashboard(selectedId);
+  const { devices, events, uptime, history, mode, loaded, error, updated, refresh } = useDashboard(selectedId);
 
-  // Pick a device automatically on first load: the one that needs attention, otherwise the first.
+  // Pick a device automatically on first load, and again after a mode switch (when the old selection
+  // no longer exists): the one that needs attention, otherwise the first.
   useEffect(() => {
-    if (!selectedId && devices.length) {
+    if (devices.length && !devices.some((d) => d.id === selectedId)) {
       setSelectedId((devices.find((d) => d.status === "DOWN") ?? devices[0]).id);
     }
   }, [devices, selectedId]);
@@ -418,11 +467,16 @@ function App() {
       <header className="top">
         <div>
           <h1>Network monitor</h1>
-          <p className="sub">Checks every device every 2 seconds</p>
+          <p className="sub">
+            Checks every device every 2 seconds · {mode === "real" ? "real pings" : "simulated network"}
+          </p>
         </div>
-        <div className={"live" + (error ? " off" : "")}>
-          <span className="dot" />
-          {error ? "Disconnected" : updated ? `Updated ${fmtTime(updated)}` : "Connecting…"}
+        <div className="top-right">
+          <ModeSwitch mode={mode} onChange={refresh} />
+          <div className={"live" + (error ? " off" : "")}>
+            <span className="dot" />
+            {error ? "Disconnected" : updated ? `Updated ${fmtTime(updated)}` : "Connecting…"}
+          </div>
         </div>
       </header>
 
@@ -435,6 +489,7 @@ function App() {
           device={selected}
           uptime={selected ? uptime[selected.id] : undefined}
           history={history.id === selectedId ? history.rows : []}
+          mode={mode}
           onChanged={refresh}
         />
       </div>

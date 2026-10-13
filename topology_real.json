@@ -1,0 +1,8 @@
+{
+  "devices": [
+    {"id": "Router",   "type": "router", "ip": "192.168.29.1",   "parent": null},
+    {"id": "Phone",    "type": "pc",     "ip": "192.168.0.105", "parent": "Router"},
+    {"id": "Laptop2",  "type": "pc",     "ip": "192.168.0.110", "parent": "Router"},
+    {"id": "Internet", "type": "server", "ip": "8.8.8.8",       "parent": "Router"}
+  ]
+}

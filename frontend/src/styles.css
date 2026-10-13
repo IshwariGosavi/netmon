@@ -34,6 +34,13 @@ h3 { font-size: 12px; font-weight: 500; color: var(--muted); margin: 18px 0 8px;
 
 .top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
 .sub { color: var(--muted); margin-top: 2px; }
+.top-right { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; background: #fff; padding: 2px; }
+.seg-btn { font: inherit; font-size: 13px; padding: 5px 14px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; }
+.seg-btn.on { background: var(--accent); color: #fff; }
+.seg-btn:hover:not(.on):not(:disabled) { background: var(--bg); }
+.seg-btn:disabled { opacity: 0.6; cursor: default; }
+.seg-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .live { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
 .live .dot { background: var(--up); }
 .live.off { color: var(--down); }
@@ -79,6 +86,7 @@ h3 { font-size: 12px; font-weight: 500; color: var(--muted); margin: 18px 0 8px;
 .axis.warn { fill: var(--degraded); }
 
 .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.note { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
 .btn { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; }
 .btn:hover:not(:disabled) { background: var(--bg); border-color: #d0d5dd; }
 .btn:disabled { opacity: 0.55; cursor: default; }
