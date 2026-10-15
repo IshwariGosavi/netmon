@@ -7,8 +7,6 @@ The test network is built in **Cisco Packet Tracer**. The system can run in two 
 - **Simulation mode:** monitors the Packet Tracer topology, with failures triggered from the dashboard.
 - **Real mode:** sends real ping packets to real devices on a LAN.
 
-**Authors:** _your name(s)_ | **Course:** Computer Networks | **University:** _your university_
-
 ---
 
 ## Contents
